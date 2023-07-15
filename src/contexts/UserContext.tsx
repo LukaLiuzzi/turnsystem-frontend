@@ -11,6 +11,7 @@ interface UserProviderProps {
 interface UserContextProps {
   user: User | null
   login: ({ email, password }: { email: string; password: string }) => void
+  error: string | string[] | null
 }
 
 const UserContext = createContext<UserContextProps | null>(null)
@@ -25,7 +26,10 @@ const useUser = () => {
 
 const UserProvider = ({ children }: UserProviderProps) => {
   const [user, setUser] = useState<User | null>(null)
+  const [error, setError] = useState<string | string[] | null>(null)
   const router = useRouter()
+
+  const clearErrors = () => setError(null)
 
   const login = async ({
     email,
@@ -42,8 +46,10 @@ const UserProvider = ({ children }: UserProviderProps) => {
       setUser(data)
 
       router.push("/")
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
+      setError(error.response.data.error)
+      setTimeout(clearErrors, 3000)
     }
   }
 
@@ -51,7 +57,6 @@ const UserProvider = ({ children }: UserProviderProps) => {
     axiosInstance
       .get<User>("/users/user")
       .then((res) => {
-        console.log(res.data)
         setUser(res.data)
       })
       .catch((err) => {
@@ -64,6 +69,7 @@ const UserProvider = ({ children }: UserProviderProps) => {
       value={{
         user,
         login,
+        error,
       }}
     >
       {children}
